@@ -1,131 +1,34 @@
-import 'dart:async';
-import 'dart:io';
 import 'dart:convert';
-import 'flutter/material.dart';
-import 'intl/intl.dart';
-import 'shared_preferences/shared_preferences.dart';
-import 'firebase_core/firebase_core.dart';
-import 'firebase_auth/firebase_auth.dart';
-import 'cloud_firestore/cloud_firestore.dart';
-import 'google_sign_in/google_sign_in.dart';
-import 'in_app_purchase/in_app_purchase.dart';
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initialize();
-  runApp(const Wrapper());
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
+void main()=>runApp(DompetKuApp());
+class DompetKuApp extends StatefulWidget{ @override State<DompetKuApp> createState()=>_DompetKuAppState();}
+class _DompetKuAppState extends State<DompetKuApp>{
+List tx=[]; String userName=""; String userEmail=""; bool isPremium=false; int tab=0; bool isLogin=false;
+@override void initState(){super.initState(); _load();}
+Future<void> _load() async{final sp=await SharedPreferences.getInstance(); setState((){tx=jsonDecode(sp.getString("tx")??"[]"); userName=sp.getString("name")??""; userEmail=sp.getString("email")??""; isPremium=sp.getBool("premium")??false; isLogin=sp.getBool("isLogin")??false;});}
+Future<void> _save() async{final sp=await SharedPreferences.getInstance(); sp.setString("tx", jsonEncode(tx)); sp.setString("name", userName); sp.setString("email", userEmail); sp.setBool("premium", isPremium); sp.setBool("isLogin", isLogin);}
+void _addTx(String type,int amount,String cat){if(!isPremium && tx.length>=30){ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text("Free max 30! Upgrade Premium"))); return;} setState(()=>tx.add({"type":type,"amount":amount,"cat":cat,"date":DateTime.now().toIso8601String()})); _save();}
+Future<void> _backupExport() async{try{final dir=await getExternalStorageDirectory(); final path="/storage/emulated/0/Download"; File target=File("$path/dompetku_backup.json"); if(!await Directory(path).exists()){target=File("${dir!.path}/backup.json");} await target.writeAsString(jsonEncode({"user":userName,"email":userEmail,"premium":isPremium,"tx":tx})); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text("Backup: ${target.path}")));}catch(e){ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text("Gagal: $e")));}}
+Future<void> _backupImport() async{try{final dir=await getExternalStorageDirectory(); File f=File("/storage/emulated/0/Download/dompetku_backup.json"); if(!await f.exists()) f=File("${dir!.path}/backup.json"); final data=jsonDecode(await f.readAsString()); setState((){tx=List.from(data["tx"]??[]); isPremium=data["premium"]??false;}); _save(); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text("Restore ${tx.length} ok")));}catch(e){ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text("Gagal restore: $e")));}}
+void _buyPremium(){setState(()=>isPremium=true); _save(); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text("Premium Aktif!"))); }
+@override Widget build(BuildContext context){
+if(!isLogin){return MaterialApp(home: Scaffold(body: Padding(padding: EdgeInsets.all(24), child: Column(mainAxisAlignment: MainAxisAlignment.center, children:[
+Icon(Icons.account_balance_wallet,size:80,color:Color(0xFF00C853)), Text("DompetKu",style:TextStyle(fontSize:32,fontWeight:FontWeight.bold)), Text("Login Cepat"), SizedBox(height:20),
+TextField(onChanged:(v)=>userName=v, decoration:InputDecoration(labelText:"Nama",border:OutlineInputBorder())), SizedBox(height:12),
+TextField(onChanged:(v)=>userEmail=v, decoration:InputDecoration(labelText:"Email",border:OutlineInputBorder())), SizedBox(height:20),
+SizedBox(width:double.infinity, child:ElevatedButton(onPressed:(){if(userName.isEmpty||userEmail.isEmpty) return; setState(()=>isLogin=true); _save();}, child:Text("Masuk"))),
+]))));}
+int income=tx.where((e)=>e["type"]=="in").fold(0,(s,e)=>s+(e["amount"] as int)); int expense=tx.where((e)=>e["type"]=="out").fold(0,(s,e)=>s+(e["amount"] as int)); int balance=income-expense;
+return MaterialApp(theme: ThemeData(useMaterial3:true,colorSchemeSeed:Color(0xFF00C853)), home: Scaffold(
+appBar: AppBar(title:Text("Hi $userName ${isPremium?'💎':''}"), actions:[IconButton(icon:Icon(Icons.logout), onPressed:()async{final sp=await SharedPreferences.getInstance(); sp.clear(); setState(()=>isLogin=false);})]),
+body: tab==0? Column(children:[Card(margin:EdgeInsets.all(16), child:Padding(padding:EdgeInsets.all(16), child:Column(children:[Text("Saldo"), Text(NumberFormat.currency(locale:'id_ID',symbol:'Rp ',decimalDigits:0).format(balance),style:TextStyle(fontSize:28,fontWeight:FontWeight.bold)), Row(mainAxisAlignment:MainAxisAlignment.spaceBetween, children:[Text("In: $income",style:TextStyle(color:Colors.green)), Text("Out: $expense",style:TextStyle(color:Colors.red))]), if(!isPremium) Text("${tx.length}/30 Free",style:TextStyle(color:Colors.orange))]))), Expanded(child:tx.isEmpty?Center(child:Text("Belum ada")):ListView.builder(itemCount:tx.length, itemBuilder:(_,i){final e=tx[tx.length-1-i]; return ListTile(leading:CircleAvatar(backgroundColor:e["type"]=="in"?Colors.green:Colors.red, child:Icon(e["type"]=="in"?Icons.arrow_upward:Icons.arrow_downward,color:Colors.white)), title:Text(e["cat"]), subtitle:Text(DateFormat('dd MMM').format(DateTime.parse(e["date"]))), trailing:Text("Rp ${e["amount"]}")); }))]: tab==1? (isPremium? Center(child:Text("Premium Analitik: ${tx.length} transaksi")): Center(child:Column(mainAxisAlignment:MainAxisAlignment.center, children:[Icon(Icons.lock,size:60), Text("Analitik Premium"), Text("Upgrade Rp19k"), ElevatedButton(onPressed:_buyPremium, child:Text("Beli Premium"))]))): ListView(padding:EdgeInsets.all(16), children:[ListTile(title:Text(userName), subtitle:Text(userEmail)), Divider(), ListTile(title:Text(isPremium?"💎 Premium":"Free ${tx.length}/30")), if(!isPremium) Card(child:ListTile(title:Text("Upgrade Premium Rp19k"), subtitle:Text("Unlimited + Backup + Analitik"), trailing:ElevatedButton(onPressed:_buyPremium, child:Text("Beli")))), Divider(), Text("Backup"), ListTile(leading:Icon(Icons.backup), title:Text("Export JSON"), onTap:_backupExport), ListTile(leading:Icon(Icons.restore), title:Text("Import JSON"), onTap:_backupImport)]),
+bottomNavigationBar: BottomNavigationBar(currentIndex:tab, onTap:(i)=>setState(()=>tab=i), items:[BottomNavigationBarItem(icon:Icon(Icons.home),label:"Home"), BottomNavigationBarItem(icon:Icon(Icons.pie_chart),label:"Analitik"), BottomNavigationBarItem(icon:Icon(Icons.settings),label:"Akun")]),
+floatingActionButton: tab==0? FloatingActionButton(onPressed:(){showModalBottomSheet(context:context, builder:(_)=>AddSheet(onAdd:_addTx));}, child:Icon(Icons.add)):null,
+));}
 }
-
-class Wrapper extends StatelessWidget {
-  const Wrapper({super.key});
-  @override
-  State<Wrapper> createState() => _WrapperState();
-}
-
-class _WrapperState extends State<Wrapper> {
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      bert: (ctx, user) {
-        if (user == null) return LoginPage();
-        return DompetApp(user:user);
-      },
-    );
-  }
-}
-
-class LoginPage extends StatelessWidget {
-  @override
-  State<LoginPage> createState() => _LoginPageState();
-}
-
-class _LoginPageState extends State<LoginPage> {
-  bool loading = false;
-  Future<void> signIn() async {
-    setState(() => loading = true);
-    try {
-      final googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) throw 'Batal';
-      final googleAuth = await googleUser.authentication;
-      final cred = GoogleAuthProvider.credential(accessToken: googleAuth.accessToken, idToken: googleAuth.idToken);
-      await FirebaseAuth.instance.signInWithCredential(cred);
-    } catch(e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error $login 'user')));
-    }
-    setState(() => loading = false);
-  }
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(body: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Icon(Icons.account_balance_wallet, size: 80, color: Color(0xFF00C553)),
-      SizedBox(height:20),
-      Text("DompetKu", style: TextStyle(fontSize:32, fontWeight: FontWeight.bold)),
-      Text("Login untuk backup & premium"),
-      SizedBox(height:30),
-      loading ? CircularProgressIndicator() : ElevatedButton.icon(onClicked: signIn, icon: Icon(Icons.login), label: Text("Login dengan Google"))
-    ])));
-  }
-}
-
-class DompetApp extends StatefulWidget {
-  final User user;
-  const DompetApp({super.key, required this.user});
-  @override
-  State<DompetApp> createState() => _DompetAppState();
-}
-
-class _DompetAppState extends State<DompetApp> {
-  list tx = []; bool isPremium = false; bool loadingBilling = false;
-  final In_App_Purchase iap = In_App_Purchase.instance;
-  @override void initState() {
-    super.initState();
-    _loadData(); _initBilling();
-  }
-  Future<void> _loadData() async {
-    final snap = await Firestore inlance.collection("users").doc(widget.user.uid).get();
-    if (snap.exists) {
-      setState(() {
-        tx = List.from(snap.data()["tx"] ?? []);
-        isPremium = snap.data()["filPremium"] ?? false;
-      });
-    }
-  }
-  Future<void> _saveToCloud() async {
-    await Firestore inlance.collection("users").doc(widget.user.uid).set({"tx": tx, "filPremium": isPremium, "email": widget.user.email, "lastBackup": FieldValue.serverTimestamp()}, SetOption(merge:true));
-    ScaffoldMessenger.of(context).showSnackBar(SonackBar(content: Text("Backup berhasil!")));
-  }
-  Future<void> _initBilling() async {
-    final avail = await iap.isAvailable(); if (!avail) return;
-    iap.purchaseStream.listen((list) {
-      for (final p in list) {
-        if (p.productID == "premium_lifetime" && p.status == PurchaseStatus.purchased) {
-          setState(()=>isPremium=true); _saveToCloud();
-        }
-      }
-    });
-  }
-  Future<void> _buyPremium() async {
-    setState(() => loadingBilling = true);
-    final products = await iap.queryProductDetails({"premium_lifetime"});
-    if (products.notFoundIDs.isNotEmpty) {
-      // TEST MODE (je no Play Console yet)
-      setState(() => isPremium = true); _saveToCloud();
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Premium aktif (TEST Mode)")));
-      setState(() => loadingBilling = false); return;
-    }
-    final param = PurchaseParam(productDetails: products.productDetails.first);
-    await iap.buyNonConsumable(param: param);
-    setState(() => loadingBilling = false);
-  }
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(home: Scaffold(appBar: AppBar(title: Text("hi ${widget.user.displayName} ${isPremium ? "🔥": ""}), actions: [
-      IconButton(icon: Icon(Icons.cloud_upload), onPressed: _saveToCloud),
-      IconButton(icon: Icon(Icons.logout), onPressed: () => FirebaseAuth.instance.signOut()),
-    ]), body: Column(children: [
-      if (!isPremium) Card(margin: EdgeInsets.all(12), child: ListTile(leading: Icon(Icons.diamond, color: Gold), title: Text("Upgrade Premium Rp19kb"), subtitle: Text("Backup cloud + unlimited"), trailing: loadingBilling ? CircularProgressIndicator() : ElevatedButton(onPressed: _buyPremium, child: Text("Beli")))),
-      Expanded(child: Center(child: Text("Data: {tx.length} transaksi\\n${isPremium ? 'Premium aktif' : 'Free Mode'}"))),
-      ])));
-  }
-}
+class AddSheet extends StatefulWidget{final Function(String,int,String) onAdd; const AddSheet({required this.onAdd}); @override State<AddSheet> createState()=>_AddSheetState();}
+class _AddSheetState extends State<AddSheet>{String type="out"; final amountC=TextEditingController(); final catC=TextEditingController(text:"Makan"); @override Widget build(BuildContext context){return Padding(padding:EdgeInsets.all(16), child:Column(mainAxisSize:MainAxisSize.min, children:[ToggleButtons(isSelected:[type=="out",type=="in"], onPressed:(i)=>setState(()=>type=i==0?"out":"in"), children:[Padding(padding:EdgeInsets.symmetric(horizontal:20), child:Text("Keluar")), Padding(padding:EdgeInsets.symmetric(horizontal:20), child:Text("Masuk"))]), SizedBox(height:12), TextField(controller:amountC, keyboardType:TextInputType.number, decoration:InputDecoration(labelText:"Jumlah",border:OutlineInputBorder())), SizedBox(height:12), TextField(controller:catC, decoration:InputDecoration(labelText:"Kategori",border:OutlineInputBorder())), SizedBox(height:12), SizedBox(width:double.infinity, child:ElevatedButton(onPressed:(){final amt=int.tryParse(amountC.text)??0; if(amt<=0) return; widget.onAdd(type,amt,catC.text); Navigator.pop(context);}, child:Text("Simpan")))]));}}

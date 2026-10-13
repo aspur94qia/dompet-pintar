@@ -1,4 +1,4 @@
-name: Build DompetKu Premium
+name: Build DompetKu Cepat
 on: [push]
 jobs:
   build:
@@ -13,11 +13,17 @@ jobs:
         with:
           flutter-version: '3.22.0'
           channel: stable
-      - run: |
-          flutter pub add firebase_core firebase_auth cloud_firestore google_sign_in shared_preferences intl in_app_purchase
-          flutter pub get
+      - name: Repair
+        run: |
+          cp lib/main.dart /tmp/main.dart
+          rm -rf android
+          flutter create. --project-name dompet_pintar --org com.aspur --no-overwrite
+          cp /tmp/main.dart lib/main.dart
+          sed -i 's/android:label=".*"/android:label="DompetKu"/' android/app/src/main/AndroidManifest.xml || true
+      - run: flutter pub add shared_preferences intl path_provider
+      - run: flutter pub get
       - run: flutter build apk --release --split-per-abi
       - uses: actions/upload-artifact@v4
         with:
-          name: DompetKu-Premium-FULL
+          name: DompetKu-Cepat-Premium
           path: build/app/outputs/flutter-apk/
