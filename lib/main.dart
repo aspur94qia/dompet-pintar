@@ -1,153 +1,131 @@
-
+import 'dart:async';
+import 'dart:io';
 import 'dart:convert';
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'flutter/material.dart';
+import 'intl/intl.dart';
+import 'shared_preferences/shared_preferences.dart';
+import 'firebase_core/firebase_core.dart';
+import 'firebase_auth/firebase_auth.dart';
+import 'cloud_firestore/cloud_firestore.dart';
+import 'google_sign_in/google_sign_in.dart';
+import 'in_app_purchase/in_app_purchase.dart';
 
-void main() => runApp(const DompetKuApp());
-
-class Trx {
-  String title; double amount; bool isExpense; String cat; DateTime date;
-  Trx(this.title, this.amount, this.isExpense, this.cat, this.date);
-  Map<String,dynamic> toMap() => {'t':title,'a':amount,'e':isExpense,'c':cat,'d':date.toIso8601String()};
-  static Trx fromMap(Map<String,dynamic> m) => Trx(m['t'], m['a'], m['e'], m['c'], DateTime.parse(m['d']));
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initialize();
+  runApp(const Wrapper());
 }
 
-class DompetKuApp extends StatelessWidget {
-  const DompetKuApp({super.key});
-  @override Widget build(BuildContext context) {
-    return MaterialApp(debugShowCheckedModeBanner: false,
-      theme: ThemeData(useMaterial3: true, colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF00C853))),
-      home: const MainScreen());
-  }
+class Wrapper extends StatelessWidget {
+  const Wrapper({super.key});
+  @override
+  State<Wrapper> createState() => _WrapperState();
 }
 
-class MainScreen extends StatefulWidget { const MainScreen({super.key}); @override State<MainScreen> createState()=>_MainScreenState(); }
-
-class _MainScreenState extends State<MainScreen> {
-  List<Trx> data = [];
-  int tab = 0;
-  bool dark = false;
-  String search = '';
-  final fmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
-
-  @override void initState(){ super.initState(); load(); }
-
-  Future<void> load() async {
-    final sp = await SharedPreferences.getInstance();
-    final s = sp.getString('trx');
-    if(s!=null){
-      final List list = jsonDecode(s);
-      setState(()=> data = list.map((e)=> Trx.fromMap(e)).toList());
-    } else {
-      setState(()=> data = [
-        Trx('Gaji Bulanan', 3500000, false, 'Gaji', DateTime.now().subtract(Duration(days:1))),
-        Trx('Kopi Kenangan', 25000, true, 'Makan', DateTime.now()),
-        Trx('Bensin', 30000, true, 'Transport', DateTime.now()),
-      ]);
-    }
-  }
-  Future<void> save() async {
-    final sp = await SharedPreferences.getInstance();
-    sp.setString('trx', jsonEncode(data.map((e)=>e.toMap()).toList()));
-  }
-
-  double get total => data.fold(0, (a,b)=> b.isExpense ? a-b.amount : a+b.amount);
-  double get masuk => data.where((e)=>!e.isExpense).fold(0,(a,b)=>a+b.amount);
-  double get keluar => data.where((e)=>e.isExpense).fold(0,(a,b)=>a+b.amount);
-
-  Map<String,double> get catMap {
-    var m = <String,double>{};
-    for(var e in data.where((e)=>e.isExpense)){ m[e.cat]=(m[e.cat]??0)+e.amount; }
-    return m;
-  }
-
-  List<Trx> get filtered => data.where((e)=> e.title.toLowerCase().contains(search.toLowerCase())).toList();
-
-  String emoji(String c){ switch(c){ case 'Makan': return '🍔'; case 'Transport': return '🛵'; case 'Belanja': return '🛍️'; case 'Gaji': return '💼'; default: return '💰'; } }
-
-  void addSheet(){
-    String title=''; String amt=''; bool exp=true; String cat='Makan';
-    showModalBottomSheet(context: context, isScrollControlled: true, shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx)=> StatefulBuilder(builder: (ctx,setM){
-        return Padding(padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom+20, left:20,right:20,top:20),
-          child: Column(mainAxisSize: MainAxisSize.min, children:[
-            Text('Transaksi Baru ✨',style:TextStyle(fontSize:20,fontWeight:FontWeight.bold)),
-            SizedBox(height:12),
-            TextField(decoration: InputDecoration(labelText:'Buat apa?', border: OutlineInputBorder(borderRadius: BorderRadius.circular(16))), onChanged:(v)=>title=v),
-            SizedBox(height:8),
-            TextField(decoration: InputDecoration(labelText:'Berapa Rp?', border: OutlineInputBorder(borderRadius: BorderRadius.circular(16))), keyboardType: TextInputType.number, onChanged:(v)=>amt=v),
-            SizedBox(height:8),
-            DropdownButtonFormField(value:cat, items:['Makan','Transport','Belanja','Gaji','Lainnya'].map((e)=>DropdownMenuItem(value:e, child:Text('${emoji(e)} $e'))).toList(), onChanged:(v)=>setM(()=>cat=v!)),
-            SizedBox(height:8),
-            Row(children:[ Expanded(child: ChoiceChip(label:Text('💸 Keluar'), selected:exp, onSelected:(v)=>setM(()=>exp=true))), SizedBox(width:8), Expanded(child: ChoiceChip(label:Text('💰 Masuk'), selected:!exp, onSelected:(v)=>setM(()=>exp=false))), ]),
-            SizedBox(height:16),
-            SizedBox(width:double.infinity, height:50, child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF00C853), foregroundColor: Colors.white), onPressed:(){ if(title.isNotEmpty && amt.isNotEmpty){ setState(()=> data.insert(0, Trx(title, double.tryParse(amt)??0, exp, cat, DateTime.now()))); save(); Navigator.pop(ctx);} }, child: Text('Simpan'))),
-          ]));
-      }));
-  }
-
-  @override Widget build(BuildContext context){
-    return Scaffold(
-      backgroundColor: dark? Color(0xFF121212): Color(0xFFF8FFFB),
-      body: tab==0 ? buildHome() : buildInsight(),
-      bottomNavigationBar: NavigationBar(selectedIndex: tab, onDestinationSelected:(i)=>setState(()=>tab=i), destinations: [ NavigationDestination(icon: Icon(Icons.home_rounded), label:'Home'), NavigationDestination(icon: Icon(Icons.pie_chart), label:'Analitik') ]),
-      floatingActionButton: FloatingActionButton.extended(onPressed:addSheet, label: Text('Tambah'), icon: Icon(Icons.add)),
+class _WrapperState extends State<Wrapper> {
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      bert: (ctx, user) {
+        if (user == null) return LoginPage();
+        return DompetApp(user:user);
+      },
     );
   }
+}
 
-  Widget buildHome(){
-    return CustomScrollView(slivers:[
-      SliverAppBar(expandedHeight: 300, pinned:true, backgroundColor: Color(0xFF00C853),
-        flexibleSpace: FlexibleSpaceBar(background: Container(decoration: BoxDecoration(gradient: LinearGradient(colors:[Color(0xFF00C853),Color(0xFF009624)])), padding: EdgeInsets.fromLTRB(20,50,20,20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children:[ Text('DompetKu ✨', style:TextStyle(color:Colors.white, fontSize:22, fontWeight:FontWeight.bold)), IconButton(onPressed:()=> setState(()=> dark=!dark), icon: Icon(dark? Icons.light_mode: Icons.dark_mode, color: Colors.white)) ]),
-          SizedBox(height:10),
-          TextField(onChanged:(v)=> setState(()=> search=v), decoration: InputDecoration(hintText:'Cari transaksi...', prefixIcon: Icon(Icons.search), filled:true, fillColor: Colors.white, border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none)),),
-          SizedBox(height:14),
-          Text('Total Saldo', style:TextStyle(color:Colors.white70)), Text(fmt.format(total), style:TextStyle(color:Colors.white, fontSize:32, fontWeight:FontWeight.w900)),
-          SizedBox(height:12),
-          Row(children:[
-            Expanded(child: Container(padding:EdgeInsets.all(12), decoration:BoxDecoration(color:Colors.white, borderRadius:BorderRadius.circular(12)), child: Text('Masuk: ${fmt.format(masuk)}', style:TextStyle(color: Color(0xFF00C853), fontWeight:FontWeight.bold)))),
-            SizedBox(width:8),
-            Expanded(child: Container(padding:EdgeInsets.all(12), decoration:BoxDecoration(color:Colors.white, borderRadius:BorderRadius.circular(12)), child: Text('Keluar: ${fmt.format(keluar)}', style:TextStyle(color: Colors.red, fontWeight:FontWeight.bold)))),
-          ])
-        ])))),
-      SliverList.builder(itemCount: filtered.length, itemBuilder:(c,i){
-        final t=filtered[i];
-        return Dismissible(key: ValueKey(t.date.toString()+i.toString()), background: Container(color: Colors.red, alignment: Alignment.centerRight, padding: EdgeInsets.only(right:20), child: Icon(Icons.delete, color: Colors.white)), onDismissed: (_){ setState(()=> data.remove(t)); save(); }, child: Card(margin: EdgeInsets.symmetric(horizontal:16, vertical:6), child: ListTile(leading: Text(emoji(t.cat), style: TextStyle(fontSize:24)), title: Text(t.title, style: TextStyle(fontWeight:FontWeight.bold)), subtitle: Text('${t.cat} • ${DateFormat('dd MMM HH:mm').format(t.date)}'), trailing: Text('${t.isExpense?'-':'+'}${fmt.format(t.amount)}', style: TextStyle(color: t.isExpense?Colors.red:Colors.green, fontWeight:FontWeight.bold)))));
-      }),
-      SliverToBoxAdapter(child: SizedBox(height:80))
-    ]);
+class LoginPage extends StatelessWidget {
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  bool loading = false;
+  Future<void> signIn() async {
+    setState(() => loading = true);
+    try {
+      final googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) throw 'Batal';
+      final googleAuth = await googleUser.authentication;
+      final cred = GoogleAuthProvider.credential(accessToken: googleAuth.accessToken, idToken: googleAuth.idToken);
+      await FirebaseAuth.instance.signInWithCredential(cred);
+    } catch(e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error $login 'user')));
+    }
+    setState(() => loading = false);
   }
-
-  Widget buildInsight(){
-    return ListView(padding: EdgeInsets.fromLTRB(20,60,20,20), children:[
-      Text('Analitik Keuangan', style:TextStyle(fontSize:24, fontWeight:FontWeight.bold)),
-      SizedBox(height:12),
-      if(catMap.isNotEmpty)
-        Container(height:200, padding:EdgeInsets.all(16), decoration:BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)), child: CustomPaint(painter: PiePainter(catMap), child: Center(child: Text('Total\n${fmt.format(keluar)}', textAlign: TextAlign.center, style: TextStyle(fontWeight:FontWeight.bold))))),
-      SizedBox(height:16),
-      Container(padding:EdgeInsets.all(16), decoration:BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)), child: Column(children: catMap.entries.map((e){ double pct = keluar==0?0:e.value/keluar; return Padding(padding:EdgeInsets.only(bottom:8), child: Row(children:[ Text('${emoji(e.key)} ${e.key}'), Spacer(), Text('${(pct*100).toStringAsFixed(0)}% • ${fmt.format(e.value)}'), SizedBox(width:8), SizedBox(width:60, child: LinearProgressIndicator(value:pct)) ])); }).toList())),
-      SizedBox(height:16),
-      Container(padding:EdgeInsets.all(16), decoration:BoxDecoration(gradient: LinearGradient(colors:[Color(0xFF00C853), Color(0xFF009624)]), borderRadius: BorderRadius.circular(16)), child: Text(keluar>masuk*0.8 ? '⚠️ Boros bos! Kurangi jajan minggu ini' : '✅ Keren! Kamu hemat bulan ini', style: TextStyle(color: Colors.white, fontWeight:FontWeight.bold))),
-    ]);
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(body: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      Icon(Icons.account_balance_wallet, size: 80, color: Color(0xFF00C553)),
+      SizedBox(height:20),
+      Text("DompetKu", style: TextStyle(fontSize:32, fontWeight: FontWeight.bold)),
+      Text("Login untuk backup & premium"),
+      SizedBox(height:30),
+      loading ? CircularProgressIndicator() : ElevatedButton.icon(onClicked: signIn, icon: Icon(Icons.login), label: Text("Login dengan Google"))
+    ])));
   }
 }
 
-class PiePainter extends CustomPainter {
-  final Map<String,double> data;
-  PiePainter(this.data);
-  @override void paint(Canvas canvas, Size size){
-    double total = data.values.fold(0,(a,b)=>a+b);
-    double start = -90*3.14159/180;
-    List<Color> colors = [Color(0xFF00C853), Color(0xFFFF5722), Color(0xFF2196F3), Color(0xFFFFC107), Color(0xFF9C27B0)];
-    int i=0;
-    for(var e in data.entries){
-      double sweep = (e.value/total)*3.14159*2;
-      final paint = Paint()..color = colors[i%colors.length]..style=PaintingStyle.fill;
-      canvas.drawArc(Rect.fromCenter(center: Offset(size.width/2, size.height/2), width: size.width*0.8, height: size.height*0.8), start, sweep, true, paint);
-      start+=sweep; i++;
+class DompetApp extends StatefulWidget {
+  final User user;
+  const DompetApp({super.key, required this.user});
+  @override
+  State<DompetApp> createState() => _DompetAppState();
+}
+
+class _DompetAppState extends State<DompetApp> {
+  list tx = []; bool isPremium = false; bool loadingBilling = false;
+  final In_App_Purchase iap = In_App_Purchase.instance;
+  @override void initState() {
+    super.initState();
+    _loadData(); _initBilling();
+  }
+  Future<void> _loadData() async {
+    final snap = await Firestore inlance.collection("users").doc(widget.user.uid).get();
+    if (snap.exists) {
+      setState(() {
+        tx = List.from(snap.data()["tx"] ?? []);
+        isPremium = snap.data()["filPremium"] ?? false;
+      });
     }
   }
-  @override bool shouldRepaint(covariant CustomPainter oldDelegate)=> true;
+  Future<void> _saveToCloud() async {
+    await Firestore inlance.collection("users").doc(widget.user.uid).set({"tx": tx, "filPremium": isPremium, "email": widget.user.email, "lastBackup": FieldValue.serverTimestamp()}, SetOption(merge:true));
+    ScaffoldMessenger.of(context).showSnackBar(SonackBar(content: Text("Backup berhasil!")));
+  }
+  Future<void> _initBilling() async {
+    final avail = await iap.isAvailable(); if (!avail) return;
+    iap.purchaseStream.listen((list) {
+      for (final p in list) {
+        if (p.productID == "premium_lifetime" && p.status == PurchaseStatus.purchased) {
+          setState(()=>isPremium=true); _saveToCloud();
+        }
+      }
+    });
+  }
+  Future<void> _buyPremium() async {
+    setState(() => loadingBilling = true);
+    final products = await iap.queryProductDetails({"premium_lifetime"});
+    if (products.notFoundIDs.isNotEmpty) {
+      // TEST MODE (je no Play Console yet)
+      setState(() => isPremium = true); _saveToCloud();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Premium aktif (TEST Mode)")));
+      setState(() => loadingBilling = false); return;
+    }
+    final param = PurchaseParam(productDetails: products.productDetails.first);
+    await iap.buyNonConsumable(param: param);
+    setState(() => loadingBilling = false);
+  }
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(home: Scaffold(appBar: AppBar(title: Text("hi ${widget.user.displayName} ${isPremium ? "🔥": ""}), actions: [
+      IconButton(icon: Icon(Icons.cloud_upload), onPressed: _saveToCloud),
+      IconButton(icon: Icon(Icons.logout), onPressed: () => FirebaseAuth.instance.signOut()),
+    ]), body: Column(children: [
+      if (!isPremium) Card(margin: EdgeInsets.all(12), child: ListTile(leading: Icon(Icons.diamond, color: Gold), title: Text("Upgrade Premium Rp19kb"), subtitle: Text("Backup cloud + unlimited"), trailing: loadingBilling ? CircularProgressIndicator() : ElevatedButton(onPressed: _buyPremium, child: Text("Beli")))),
+      Expanded(child: Center(child: Text("Data: {tx.length} transaksi\\n${isPremium ? 'Premium aktif' : 'Free Mode'}"))),
+      ])));
+  }
 }

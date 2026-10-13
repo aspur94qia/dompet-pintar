@@ -1,4 +1,4 @@
-name: Build DompetKu APK
+name: Build DompetKu Premium
 on: [push]
 jobs:
   build:
@@ -13,29 +13,11 @@ jobs:
         with:
           flutter-version: '3.22.0'
           channel: stable
-      - name: Repair & Branding
-        run: |
-          cp lib/main.dart /tmp/main.dart
-          rm -rf android
-          flutter create . --project-name dompet_pintar --org com.aspur --no-overwrite
-          cp /tmp/main.dart lib/main.dart
-          pip3 install pillow
-          python3 -c "
-          from PIL import Image, ImageDraw
-          img = Image.new('RGB', (1024,1024), (0,200,83))
-          d = ImageDraw.Draw(img)
-          d.ellipse([200,200,824,824], fill=(255,255,255))
-          d.ellipse([350,350,674,674], fill=(0,200,83))
-          paths=['android/app/src/main/res/mipmap-hdpi/ic_launcher.png','android/app/src/main/res/mipmap-mdpi/ic_launcher.png','android/app/src/main/res/mipmap-xhdpi/ic_launcher.png','android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png','android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png']
-          for p in paths:
-              img.save(p)
-          "
-          sed -i 's/android:label=".*"/android:label="DompetKu"/' android/app/src/main/AndroidManifest.xml || true
-      - run: flutter pub add intl shared_preferences
-      - run: flutter pub get
+      - run: |
+          flutter pub add firebase_core firebase_auth cloud_firestore google_sign_in shared_preferences intl in_app_purchase
+          flutter pub get
       - run: flutter build apk --release --split-per-abi
-      - run: ls -lh build/app/outputs/flutter-apk/
       - uses: actions/upload-artifact@v4
         with:
-          name: DompetKu-15MB-Fix
+          name: DompetKu-Premium-FULL
           path: build/app/outputs/flutter-apk/
