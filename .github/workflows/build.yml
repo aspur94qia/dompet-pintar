@@ -13,6 +13,13 @@ jobs:
         with:
           flutter-version: '3.22.0'
           channel: stable
+      - name: Repair android project
+        run: |
+          cp lib/main.dart /tmp/main.dart
+          rm -rf android
+          flutter create . --project-name dompet_pintar --org com.aspur --no-overwrite
+          cp /tmp/main.dart lib/main.dart
+      - run: flutter pub add intl
       - run: flutter pub get
       - run: flutter build apk --debug
       - uses: actions/upload-artifact@v4
