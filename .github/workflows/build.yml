@@ -1,4 +1,4 @@
-name: Build APK
+name: Build DompetKu APK
 on: [push]
 jobs:
   build:
@@ -13,16 +13,26 @@ jobs:
         with:
           flutter-version: '3.22.0'
           channel: stable
-      - name: Repair android project
+      - name: Set App Name & Icon
         run: |
-          cp lib/main.dart /tmp/main.dart
-          rm -rf android
-          flutter create . --project-name dompet_pintar --org com.aspur --no-overwrite
-          cp /tmp/main.dart lib/main.dart
+          sed -i "s/android:label=.*/android:label=\"DompetKu\"/" android/app/src/main/AndroidManifest.xml || true
+          python3 -c "
+          from PIL import Image, ImageDraw
+          img = Image.new('RGB', (1024,1024), (0,200,83))
+          d = ImageDraw.Draw(img)
+          d.ellipse([200,200,824,824], fill=(255,255,255))
+          d.ellipse([350,350,674,674], fill=(0,200,83))
+          img.save('android/app/src/main/res/mipmap-hdpi/ic_launcher.png')
+          img.save('android/app/src/main/res/mipmap-mdpi/ic_launcher.png')
+          img.save('android/app/src/main/res/mipmap-xhdpi/ic_launcher.png')
+          img.save('android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png')
+          img.save('android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png')
+          print('icon done')
+          "
       - run: flutter pub add intl
       - run: flutter pub get
       - run: flutter build apk --debug
       - uses: actions/upload-artifact@v4
         with:
-          name: dompet-pintar-apk
+          name: DompetKu-APK-Aesthetic
           path: build/app/outputs/flutter-apk/app-debug.apk
