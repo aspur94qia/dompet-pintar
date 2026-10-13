@@ -17,7 +17,7 @@ jobs:
         run: |
           cp lib/main.dart /tmp/main.dart
           rm -rf android
-          flutter create. --project-name dompet_pintar --org com.aspur --no-overwrite
+          flutter create . --project-name dompet_pintar --org com.aspur --no-overwrite
           cp /tmp/main.dart lib/main.dart
           sed -i 's/android:label=".*"/android:label="DompetKu"/' android/app/src/main/AndroidManifest.xml || true
       - run: flutter pub add shared_preferences intl path_provider
