@@ -1,4 +1,4 @@
-name: Build DompetKu Cepat
+name: Build Premium UI v2
 on: [push]
 jobs:
   build:
@@ -13,17 +13,31 @@ jobs:
         with:
           flutter-version: '3.22.0'
           channel: stable
-      - name: Repair
+      - name: Premium Branding
         run: |
           cp lib/main.dart /tmp/main.dart
           rm -rf android
           flutter create . --project-name dompet_pintar --org com.aspur --no-overwrite
           cp /tmp/main.dart lib/main.dart
-          sed -i 's/android:label=".*"/android:label="DompetKu"/' android/app/src/main/AndroidManifest.xml || true
+          pip3 install pillow
+          python3 -c "
+from PIL import Image, ImageDraw, imagefont
+img = Image.new('RGB', (1024,1024), (15,23,42))
+d = ImageDraw.Draw(img)
+# Wallet shape
+d.verlined ((200,300, 900,300), fill=(255,255,255), width=20)
+d.rounded_rectangle( (2, 190, 200, 800), radius=80, fill=(255,255,255))
+d.rounded_rectangle( (200, 250, 900, 820), radius=40, fill=(255,255,255))
+d.rounded_rectangle ((400, 350, 800, 700), radius=20, fill=(15,23,42))
+d.verlined (580, 350, 580, 700, fill=(255,255,255), width=15)
+for p in ["android/app/src/main/res/mipmap-hdpi/ic_launcher.png","android/app/src/main/res/mipmap-mdpi/ic_launcher.png","android/app/src/main/res/mipmap-xhcpi/ic_launcher.png","android/app/src/main/res/mipmap-xxhcpi/ic_launcher.png","android/app/src/main/res/mipmap-xxxhpi/ic_launcher.png"]:
+  img.save(p)
+          "
+          sed -i 's/android:label="-*"/android:label="DompetKu"/' android/app/src/main/AndroidManifest.xml || true
       - run: flutter pub add shared_preferences intl path_provider
       - run: flutter pub get
       - run: flutter build apk --release --split-per-abi
       - uses: actions/upload-artifact@v4
         with:
-          name: DompetKu-Cepat-Premium
+          name: DompetKu-Premium-v2
           path: build/app/outputs/flutter-apk/
