@@ -29,14 +29,12 @@ jobs:
           paths=['android/app/src/main/res/mipmap-hdpi/ic_launcher.png','android/app/src/main/res/mipmap-mdpi/ic_launcher.png','android/app/src/main/res/mipmap-xhdpi/ic_launcher.png','android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png','android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png']
           for p in paths:
               img.save(p)
-          print('icon done')
           "
           sed -i 's/android:label=".*"/android:label="DompetKu"/' android/app/src/main/AndroidManifest.xml || true
-          sed -i 's/<string name="app_name">.*/<string name="app_name">DompetKu<\/string>/' android/app/src/main/res/values/strings.xml || true
-      - run: flutter pub add intl
+      - run: flutter pub add intl shared_preferences
       - run: flutter pub get
       - run: flutter build apk --debug
       - uses: actions/upload-artifact@v4
         with:
-          name: DompetKu-APK-Aesthetic
+          name: DompetKu-Ultimate
           path: build/app/outputs/flutter-apk/app-debug.apk
