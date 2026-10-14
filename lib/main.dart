@@ -8,22 +8,17 @@ import 'package:path_provider/path_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 void main() => runApp(DompetKuV3());
-
 class DompetKuV3 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(useMaterial3: true, colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF0F172A), brightness: Brightness.light)),
-      darkTheme: ThemeData(useMaterial3: true, colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF0F172A), brightness: Brightness.dark)),
+      theme: ThemeData(useMaterial3: true, colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF0F172A))),
       home: MainV3(),
     );
   }
 }
-
-class MainV3 extends StatefulWidget { @override
-  State<MainV3> createState() => _MainV3State(); }
-
+class MainV3 extends StatefulWidget { @override State<MainV3> createState() => _MainV3State(); }
 class _MainV3State extends State<MainV3> {
   List tx = [];
   List goals = [];
@@ -32,7 +27,6 @@ class _MainV3State extends State<MainV3> {
   bool isPremium = false;
   int tab = 0;
   bool isLogin = false;
-
   Map<String, IconData> catIcon = {
     "Makan": Icons.restaurant_rounded,
     "Transport": Icons.directions_car_rounded,
@@ -47,14 +41,11 @@ class _MainV3State extends State<MainV3> {
     "Transport": Color(0xFF3B82F6),
     "Belanja": Color(0xFFF59E0B),
     "Gaji": Color(0xFF10B981),
-    "Tagihan": Color(0xFF8B_CF6),
+    "Tagihan": Color(0xFF8B5CF6),
     "Hiburan": Color(0xFFEC4899),
     "Kesehatan": Color(0xFFEF4444),
   };
-
-  @override
-  void initState() { super.initState(); _load(); }
-
+  @override void initState() { super.initState(); _load(); }
   Future<void> _load() async {
     final sp = await SharedPreferences.getInstance();
     setState(() {
@@ -75,13 +66,12 @@ class _MainV3State extends State<MainV3> {
     sp.setBool("premium", isPremium);
     sp.setBool("isLogin", isLogin);
   }
-
   void _addTx(String type, int amount, String cat) {
     if (!isPremium && tx.length >= 50) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Free 50 limit! Upgrade Premium bos")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Free 50 limit! Upgrade bos")));
       return;
     }
-    setState(() { tx.add({"type": type, "amount": amount, "cat": cat, "date": DateTime.now().toIs8601String()}); });
+    setState(() { tx.add({"type": type, "amount": amount, "cat": cat, "date": DateTime.now().toIso8601String()}); });
     _save();
   }
   void _addGoal(String title, int target) {
@@ -96,21 +86,135 @@ class _MainV3State extends State<MainV3> {
         f = File("${dir!.path}/backup_v3.json");
       }
       await f.writeAsString(jsonEncode({"user": name, "premium": isPremium, "tx": tx, "goals": goals}));
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Backup V1: ${f.path}")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Backup: ${f.path}")));
     } catch (e) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("$e"))); }
   }
   void _buy() { setState(() => isPremium = true); _save(); }
-
-  @override
-  Widget build(BuildContext context) {
+  @override Widget build(BuildContext context) {
     if (!isLogin) {
-      return Scaffold(
-        backgroundColor: Color(0xFF0F172A),
-        body: Center(child: Padding(padding: EdgeInsets.all(24), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Container(padding: EdgeInsets.all(20), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(28), boxShadow: [BoxShadow(color: Colors.amber.withOpacity(0.2), blurRadius: 30)]), child: Icon(Icons.account_balance_wallet_rounded, size: 64, color: Color(0xFF0F172A))),
-          SizedBox(height: 24),
-          Text("DompetKu V3", style: TextStyle(fontSize: 38, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -1)),
-          Text("Premium Leather Wallet", style: TextStyle(color: Colors.amber.shade200, letterSpacing: 2, fontSize: 12, fontWeight: FontWeight.bold)),
-          SizedBox(height: 32),
-          Container(decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)), padding: EdgeInsets.all(22), child: Column(children: [
-            TextField(onChanged: (v) => name = v, decoration: InputDecoration(labelText: "Nama Lengkap", prefixI½¸è%½¸¡%½¹Ì¹Á•ÉÍ½¹}É½Õ¹‘•¤°‰½É‘•Èè=ÕÑ±¥¹•%¹ÁÕÑ	½É‘•È¡‰½É‘•ÉI…‘¥ÕÌè	½É‘•ÉI…‘¥ÕÌ¹¥ÉÕ±…È ÄÈ¤¤¤¤°(€€€€€€€€€€€M¥é•‘	½à¡¡•¥¡Ðè€ÄÈ¤°(€€€€€€€€€€€Q•áÑ¥•±¡½¹¡…¹•è€¡Ø¤€ôø•µ…¥°€ôØ°‘•½É…Ñ¥½¸è%¹ÁÕÑ•½É…Ñ¥½¸¡±…‰•±Q•áÐè€‰µ…¥°ˆ°ÁÉ•™¥á&6öã¢–6öâ„–6öç2æVÖ–Å÷&÷VæFVB’Â&÷&FW#¢÷WFÆ–æT–çWD&÷&FW"†&÷&FW%&F—W3¢&÷&FW%&F—W2æ6—&7VÆ"ƒ"’’’’À¢6—¦VD&÷‚††V–v‡C¢#’À¢6—¦VD&÷‚‡v–GFƒ¢F÷V&ÆRæ–æf–æ—G’Â†V–v‡C¢SbÂ6†–ÆC¢VÆWfFVD'WGFöâ‡7G–ÆS¢VÆWfFVD'WGFöâç7G–ÆTg&öÒ†&6¶w&÷VæD6öÆ÷#¢6öÆ÷"ƒ„dccs$’Â6†S¢&÷VæFVE&V7FævÆT&÷&FW"†&÷&FW%&F—W3¢&÷&FW%&F—W2æ6—&7VÆ"ƒB’’’Âöå&W76VC¢‚’²–b†æÖRæ—4V×G’’&WGW&ã²6WE7FFR‚‚’Óâ—4Æöv–âÒG'VR“²÷6fR‚“²ÒÂ6†–ÆC¢FW‡B‚$Ô5T²´RDôÕUB"Â7G–ÆS¢FW‡E7G–ÆR†föçEvV–v‡C¢föçEvV–v‡Bæ&öÆBÂÆWGFW%76–æs¢ãR’’’’’À¢Ò’À¢Ò’’’À¢“°¢Ð ¢–çB–æ2ÒG‚çv†W&R‚†R’ÓâU²'G—R%ÒÓÒ&–â"’æföÆBƒÂ‡2ÂR’Óâ2²†U²&Ö÷VçB%Ò2–çB’“°¢–çB÷WBÒG‚çv†W&R‚†R’ÓâU²'G—R%ÒÓÒ&÷WB"’æföÆBƒÂ‡2ÂR’Óâ2²†U²&Ö÷VçB%Ò2–çB’“°¢–çB&ÂÒ–æ2Ò÷WC° ¢ÖÅ7G&–ærÂ–çCâ6DÖÒ·Ó°¢f÷"‡f"R–âG‚çv†W&R‚†R’ÓâU²'G—R%ÒÓÒ&÷WB"’’°¢6DÖ¶U²&6B%ÕÒÒ†6DÖ¶U²&6B%ÕÒóò’²†U²&Ö÷VçB%Ò2–çB“°¢Ð ¢&WGW&â66fföÆB€¢&6¶w&÷VæD6öÆ÷#¢6öÆ÷"ƒ„ddc„dd2’À¢&÷GFöÔæf–vF–öä&#¢æf–vF–öä&"‡6VÆV7FVD–æFWƒ¢F"ÂöäFW7F–æF–öå6VÆV7FVC¢†’’Óâ6WE7FFR‚‚’ÓâF"Ò’’ÂFW7F–æF–öç3¢°¢æf–vF–öäFW7F–æF–öâ†–6öã¢–6öâ„–6öç2æ†öÖU÷&÷VæFVB’ÂÆ&VÃ¢$†öÖR"’À¢æf–vF–öäFW7F–æF–öâ†–6öã¢–6öâ„–6öç2ç–Uö6†'E÷&÷VæFVB’ÂÆ&VÃ¢$æÆ—F–²"’À¢æf–vF–öäFW7F–æF–öâ†–6öã¢–6öâ„–6öç2ç6f–æw5÷&÷VæFVB’ÂÆ&VÃ¢$vöÇ2"’À¢æf–vF–öäFW7F–æF–öâ†–6öã¢–6öâ„–6öç2çW'6öå÷&÷VæFVB’ÂÆ&VÃ¢$·Vâ"’À¢Ò’À¢&öG“¢F"ÓÒòÆ—7Ef–Wr†6†–ÆG&Vã¢°¢6öçF–æW"‡FF–æs¢VFvT–ç6WG2æg&öÔÅE$"ƒ#ÂSbÂ#Â#B’ÂFV6÷&F–öã¢&÷„FV6÷&F–öâ†6öÆ÷#¢6öÆ÷"ƒ„dccs$’Â&÷&FW%&F—W3¢&÷&FW%&F—W2çfW'F–6Â†&÷GFöÓ¢&F—W2æ6—&7VÆ"ƒ#‚’’’Â6†–ÆC¢6öÇVÖâ†7&÷74†—4Æ–væÖVçC¢7&÷74†—4Æ–væÖVçBç7F'BÂ6†–ÆG&Vã¢°¢&÷r†Ö–ä†—4Æ–væÖVçC¢Ö–ä†—4Æ–væÖVçBç76T&WGvVVâÂ6†–ÆG&Vã¢°¢6öÇVÖâ†7&÷74†—4Æ–væÖVçC¢7&÷74†—4Æ–væÖVçBç7F'BÂ6†–ÆG&Vã¢µFW‡B‚$†ÆòÂFæÖRG¶—5&VÖ—VÒò/	ùª‚"¢"'Ò"Â7G–ÆS¢FW‡E7G–ÆR†6öÆ÷#¢6öÆ÷'2çv†—FSs’’ÂFW‡B‚%F÷FÂ&Ææ6R"Â7G–ÆS¢FW‡E7G–ÆR†6öÆ÷#¢6öÆ÷'2çv†—FS3‚ÂföçE6—¦S¢ÂÆWGFW%76–æs¢’•Ò’À¢6—&6ÆTfF"†&6¶w&÷VæD6öÆ÷#¢6öÆ÷'2çv†—FRÂ6†–ÆC¢FW‡B†æÖRæ—4V×G’ò%R"¢æÖU³ÒçFõWW$66R‚’Â7G–ÆS¢FW‡E7G–ÆR†föçEvV–v‡C¢föçEvV–v‡Bæ&öÆB’’’À¢Ò’À¢6—¦VD&÷‚††V–v‡C¢"’À¢FW‡B„çVÖ&W$f÷&ÖBæ7W'&Væ7’†Æö6ÆS¢v–Eô”BrÂ7–Ö&öÃ¢u'rÂFV6–ÖÄF–v—G3¢’æf÷&ÖB†&Â’Â7G–ÆS¢FW‡E7G–ÆR†6öÆ÷#¢6öÆ÷'2çv†—FRÂföçE6—¦S¢3bÂföçEvV–v‡C¢föçEvV–v‡Bçs“ÂÆWGFW%76–æs¢Ó’’À¢6—¦VD&÷‚††V–v‡C¢b’À¢&÷r†6†–ÆG&Vã¢°¢W‡æFVB†6†–ÆC¢ö&Ææ6T6&B„–6öç2æ'&÷u÷Wv&E÷&÷VæFVBÂ$Ö7V²"Â–æ2Â6öÆ÷'2æw&VVä66VçB’’À¢6—¦VD&÷‚‡v–GFƒ¢"’À¢W‡æFVB†6†–ÆC¢ö&Ææ6T6&B„–6öç2æ'&÷uöF÷vçv&E÷&÷VæFVBÂ$¶VÇV""Â÷WBÂ6öÆ÷'2ç&VD66VçB’’À¢Ò’À¢–b‚—5&VÖ—VÒ’6öçF–æW"†Ö&v–ã¢VFvT–ç6WG2æöæÇ’‡F÷¢b’ÂFF–æs¢VFvT–ç6WG2æÆÂƒ"’ÂFV6÷&F–öã¢&÷„FV6÷&F–öâ†6öÆ÷#¢6öÆ÷'2çv†—FRçv—F„÷6—G’ƒã‚’Â&÷&FW%&F—W3¢&÷&FW%&F—W2æ6—&7VÆ"ƒ"’Â&÷&FW#¢&÷&FW"æÆÂ†6öÆ÷#¢6öÆ÷'2æÖ&W"çv—F„÷6—G’ƒã2’’’Â6†–ÆC¢&÷r†6†–ÆG&Vã¢´–6öâ„–6öç2ç7F'5÷&÷VæFVBÂ6öÆ÷#¢6öÆ÷'2æÖ&W"’Â6—¦VD&÷‚‡v–GFƒ¢‚’ÂW‡æFVB†6†–ÆC¢FW‡B‚"G·G‚æÆVæwF‡ÒóSg&VRâWw&FR'VBVæÆ–Ö—FVBb6†'B"Â7G–ÆS¢FW‡E7G–ÆR†6öÆ÷#¢6öÆ÷'2æÖ&W"ç6†FSÂföçE6—¦S¢’’’ÂFW‡D'WGFöâ†öå&W76VC¢‚’Óâ6WE7FFR‚‚’ÓâF"Ò2’Â6†–ÆC¢FW‡B‚%Uu$DB"Â7G–ÆS¢FW‡E7G–ÆR†6öÆ÷#¢6öÆ÷'2æÖ&W"’’•Ò’’À¢Ò’’À¢FF–ær‡FF–æs¢VFvT–ç6WG2æÆÂƒb’Â6†–ÆC¢&÷r†Ö–ä†—4Æ–væÖVçC¢Ö–ä†—4Æ–væÖVçBç76T&WGvVVâÂ6†–ÆG&Vã¢µFW‡B‚%G&ç6·6’FW&¶†—""Â7G–ÆS¢FW‡E7G–ÆR†föçEvV–v‡C¢föçEvV–v‡Bæ&öÆBÂföçE6—¦S¢b’’ÂFW‡D'WGFöâ†öå&W76VC¢‚’Óâ6WE7FFR‚‚’ÓâF"Ò’Â6†–ÆC¢FW‡B‚$Æ–†B6V×V"’•Ò’’À¢ââçG‚ç&WfW'6VBçF¶Rƒ‚’æÖ‚†R’°¢&WGW&â6öçF–æW"†Ö&v–ã¢VFvT–ç6WG2ç7–ÖÖWG&–2††÷&—¦öçFÃ¢bÂfW'F–6Ã¢B’ÂFV6÷&F–öã¢&÷„FV6÷&F–öâ†6öÆ÷#¢6öÆ÷'2çv†—FRÂ&÷&FW%&F—W3¢&÷&FW%&F—W2æ6—&7VÆ"ƒB’Â&÷…6†F÷s¢´&÷…6†F÷r†6öÆ÷#¢6öÆ÷'2æ&Æ6²çv—F„÷6—G’ƒã2’Â&ÇW%&F—W3¢‚•Ò’Â6†–ÆC¢Æ—7EF–ÆR†ÆVF–æs¢6öçF–æW"‡FF–æs¢VFvT–ç6WG2æÆÂƒ’ÂFV6÷&F–öã¢&÷„FV6÷&F–öâ†6öÆ÷#¢†6D6öÆ÷%¶U²&6B%Òó
+      return Scaffold(backgroundColor: Color(0xFF0F172A), body: Center(child: Padding(padding: EdgeInsets.all(24), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Container(padding: EdgeInsets.all(20), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(28)), child: Icon(Icons.account_balance_wallet_rounded, size: 64, color: Color(0xFF0F172A))),
+        SizedBox(height: 24),
+        Text("DompetKu V3", style: TextStyle(fontSize: 38, fontWeight: FontWeight.w900, color: Colors.white)),
+        Text("Premium Leather Wallet", style: TextStyle(color: Colors.amber.shade200, letterSpacing: 2, fontSize: 12, fontWeight: FontWeight.bold)),
+        SizedBox(height: 32),
+        Container(decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)), padding: EdgeInsets.all(22), child: Column(children: [
+          TextField(onChanged: (v) => name = v, decoration: InputDecoration(labelText: "Nama Lengkap", prefixIcon: Icon(Icons.person_rounded), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
+          SizedBox(height: 12),
+          TextField(onChanged: (v) => email = v, decoration: InputDecoration(labelText: "Email", prefixIcon: Icon(Icons.email_rounded), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
+          SizedBox(height: 20),
+          SizedBox(width: double.infinity, height: 56, child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF0F172A), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))), onPressed: () { if (name.isEmpty) return; setState(() => isLogin = true); _save(); }, child: Text("MASUK KE DOMPET", style: TextStyle(fontWeight: FontWeight.bold)))),
+        ])),
+      ]))));
+    }
+    int inc = tx.where((e) => e["type"] == "in").fold(0, (s, e) => s + (e["amount"] as int));
+    int out = tx.where((e) => e["type"] == "out").fold(0, (s, e) => s + (e["amount"] as int));
+    int bal = inc - out;
+    Map<String, int> catMap = {};
+    for (var e in tx.where((e) => e["type"] == "out")) { catMap[e["cat"]] = (catMap[e["cat"]] ?? 0) + (e["amount"] as int); }
+    return Scaffold(
+      backgroundColor: Color(0xFFF8FAFC),
+      bottomNavigationBar: NavigationBar(selectedIndex: tab, onDestinationSelected: (i) => setState(() => tab = i), destinations: [
+        NavigationDestination(icon: Icon(Icons.home_rounded), label: "Home"),
+        NavigationDestination(icon: Icon(Icons.pie_chart_rounded), label: "Analitik"),
+        NavigationDestination(icon: Icon(Icons.savings_rounded), label: "Goals"),
+        NavigationDestination(icon: Icon(Icons.person_rounded), label: "Akun"),
+      ]),
+      body: tab == 0 ? ListView(children: [
+        Container(padding: EdgeInsets.fromLTRB(20, 56, 20, 24), decoration: BoxDecoration(color: Color(0xFF0F172A), borderRadius: BorderRadius.vertical(bottom: Radius.circular(28))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("Halo, $name ${isPremium ? "Premium" : ""}", style: TextStyle(color: Colors.white70)), Text("Total Balance", style: TextStyle(color: Colors.white38, fontSize: 11))]),
+            CircleAvatar(backgroundColor: Colors.white, child: Text(name.isEmpty ? "U" : name[0].toUpperCase(), style: TextStyle(fontWeight: FontWeight.bold))),
+          ]),
+          SizedBox(height: 12),
+          Text(NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(bal), style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900)),
+          SizedBox(height: 16),
+          Row(children: [
+            Expanded(child: Container(padding: EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(14)), child: Row(children: [Icon(Icons.arrow_upward_rounded, color: Colors.greenAccent, size: 20), SizedBox(width: 8), Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("Masuk", style: TextStyle(color: Colors.white54, fontSize: 10)), Text("Rp $inc", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))])]))),
+            SizedBox(width: 12),
+            Expanded(child: Container(padding: EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(14)), child: Row(children: [Icon(Icons.arrow_downward_rounded, color: Colors.redAccent, size: 20), SizedBox(width: 8), Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("Keluar", style: TextStyle(color: Colors.white54, fontSize: 10)), Text("Rp $out", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))])]))),
+          ]),
+        ])),
+        Padding(padding: EdgeInsets.all(16), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text("Transaksi Terakhir", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)), TextButton(onPressed: () => setState(() => tab = 1), child: Text("Lihat Semua"))])),
+        ...tx.reversed.take(8).map((e) {
+          return Container(margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)), child: ListTile(leading: Container(padding: EdgeInsets.all(10), decoration: BoxDecoration(color: (catColor[e["cat"]] ?? Colors.grey).withOpacity(0.12), borderRadius: BorderRadius.circular(12)), child: Icon(catIcon[e["cat"]] ?? Icons.wallet_rounded, color: catColor[e["cat"]] ?? Colors.grey)), title: Text(e["cat"], style: TextStyle(fontWeight: FontWeight.w600)), subtitle: Text(DateFormat('dd MMM').format(DateTime.parse(e["date"]))), trailing: Text("${e["type"] == "in" ? "+" : "-"} Rp ${e["amount"]}", style: TextStyle(fontWeight: FontWeight.bold, color: e["type"] == "in" ? Colors.green : Colors.black))));
+        }).toList(),
+        SizedBox(height: 90),
+      ]) : tab == 1 ? ListView(padding: EdgeInsets.all(20), children: [
+        Text("Analitik", style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
+        SizedBox(height: 16),
+        Container(padding: EdgeInsets.all(20), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)), child: Column(children: [
+          Text("Pengeluaran per Kategori", style: TextStyle(fontWeight: FontWeight.bold)),
+          SizedBox(height: 20),
+          SizedBox(height: 220, child: isPremium && catMap.isNotEmpty ? PieChart(PieChartData(sections: catMap.entries.map((en) { final color = catColor[en.key] ?? Colors.grey; return PieChartSectionData(value: en.value.toDouble(), title: "${en.key}\n${(en.value/out*100).toStringAsFixed(0)}%", color: color, radius: 70, titleStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)); }).toList(), sectionsSpace: 2, centerSpaceRadius: 40)) : Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.lock_rounded, size: 48, color: Colors.grey.shade300), Text("Premium Only"), SizedBox(height: 8), ElevatedButton(onPressed: _buy, child: Text("Unlock Rp19k"))]))),
+        ])),
+      ]) : tab == 2 ? ListView(padding: EdgeInsets.all(20), children: [
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text("Goals", style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)), IconButton(onPressed: () { showModalBottomSheet(context: context, builder: (_) => GoalSheet(onAdd: _addGoal)); }, icon: Icon(Icons.add_circle_rounded, size: 32))]),
+        SizedBox(height: 12),
+        ...goals.map((g) {
+          double prog = (g["saved"]/g["target"]).clamp(0.0, 1.0);
+          return Container(margin: EdgeInsets.only(bottom: 12), padding: EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(g["title"], style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)), Text("${(prog*100).toInt()}%", style: TextStyle(fontWeight: FontWeight.bold))]),
+            SizedBox(height: 8),
+            LinearProgressIndicator(value: prog, backgroundColor: Colors.grey.shade200, color: Color(0xFF0F172A), minHeight: 8),
+            SizedBox(height: 8),
+            Text("Rp ${g["saved"]} / Rp ${g["target"]}", style: TextStyle(color: Colors.grey, fontSize: 12)),
+          ]));
+        }).toList(),
+      ]) : ListView(padding: EdgeInsets.all(20), children: [
+        Container(padding: EdgeInsets.all(20), decoration: BoxDecoration(color: Color(0xFF0F172A), borderRadius: BorderRadius.circular(20)), child: Row(children: [CircleAvatar(radius: 32, backgroundColor: Colors.white, child: Text(name.isEmpty ? "U" : name[0].toUpperCase(), style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold))), SizedBox(width: 16), Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(name, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)), Text(email, style: TextStyle(color: Colors.white70)), Container(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: isPremium ? Colors.amber : Colors.grey, borderRadius: BorderRadius.circular(20)), child: Text(isPremium ? "PREMIUM V3" : "FREE", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)))])])),
+        SizedBox(height: 20),
+        if (!isPremium) Container(padding: EdgeInsets.all(18), decoration: BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF0F172A), Color(0xFF1E293B)]), borderRadius: BorderRadius.circular(18)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("Upgrade ke V3 Premium", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)), SizedBox(height: 8), Text("Unlimited + Pie Chart + Goals", style: TextStyle(color: Colors.white70, fontSize: 12)), SizedBox(height: 14), SizedBox(width: double.infinity, height: 50, child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black), onPressed: _buy, child: Text("BELI Rp19.000 LIFETIME")))])),
+        SizedBox(height: 20),
+        ListTile(leading: Icon(Icons.backup_rounded), title: Text("Export Backup V3"), onTap: _export),
+        ListTile(leading: Icon(Icons.logout_rounded, color: Colors.red), title: Text("Logout", style: TextStyle(color: Colors.red)), onTap: () async { final sp = await SharedPreferences.getInstance(); sp.clear(); setState(() => isLogin = false); }),
+      ]),
+      floatingActionButton: FloatingActionButton.extended(backgroundColor: Color(0xFF0F172A), icon: Icon(Icons.add_rounded, color: Colors.white), label: Text("Tambah", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), onPressed: () { showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (_) => AddSheetV3(onAdd: _addTx, cats: catIcon.keys.toList())); }),
+    );
+  }
+}
+class AddSheetV3 extends StatefulWidget {
+  final Function(String, int, String) onAdd;
+  final List<String> cats;
+  const AddSheetV3({required this.onAdd, required this.cats});
+  @override State<AddSheetV3> createState() => _AddSheetV3State();
+}
+class _AddSheetV3State extends State<AddSheetV3> {
+  String type = "out";
+  final amountC = TextEditingController();
+  String cat = "Makan";
+  @override Widget build(BuildContext context) {
+    return Container(decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))), padding: EdgeInsets.all(22), child: Column(mainAxisSize: MainAxisSize.min, children: [
+      Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+      SizedBox(height: 20),
+      SegmentedButton<String>(segments: [ButtonSegment(value: "out", label: Text("Keluar"), icon: Icon(Icons.arrow_downward_rounded)), ButtonSegment(value: "in", label: Text("Masuk"), icon: Icon(Icons.arrow_upward_rounded))], selected: {type}, onSelectionChanged: (s) => setState(() => type = s.first)),
+      SizedBox(height: 16),
+      TextField(controller: amountC, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: "Nominal", prefixText: "Rp ", border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)))),
+      SizedBox(height: 12),
+      DropdownButtonFormField<String>(value: cat, items: widget.cats.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) => setState(() => cat = v!), decoration: InputDecoration(labelText: "Kategori", border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)))),
+      SizedBox(height: 20),
+      SizedBox(width: double.infinity, height: 54, child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF0F172A)), onPressed: () { final a = int.tryParse(amountC.text) ?? 0; if (a <= 0) return; widget.onAdd(type, a, cat); Navigator.pop(context); }, child: Text("SIMPAN TRANSAKSI", style: TextStyle(fontWeight: FontWeight.bold)))),
+      SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
+    ]));
+  }
+}
+class GoalSheet extends StatefulWidget {
+  final Function(String, int) onAdd;
+  const GoalSheet({required this.onAdd});
+  @override State<GoalSheet> createState() => _GoalSheetState();
+}
+class _GoalSheetState extends State<GoalSheet> {
+  final titleC = TextEditingController();
+  final targetC = TextEditingController();
+  @override Widget build(BuildContext context) {
+    return Padding(padding: EdgeInsets.all(20), child: Column(mainAxisSize: MainAxisSize.min, children: [
+      Text("Target Baru", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+      SizedBox(height: 12),
+      TextField(controller: titleC, decoration: InputDecoration(labelText: "Contoh: Liburan ke Bali", border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
+      SizedBox(height: 12),
+      TextField(controller: targetC, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: "Target Rp", border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
+      SizedBox(height: 16),
+      SizedBox(width: double.infinity, child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF0F172A)), onPressed: () { final t = int.tryParse(targetC.text) ?? 0; if (t <= 0 || titleC.text.isEmpty) return; widget.onAdd(titleC.text, t); Navigator.pop(context); }, child: Text("SIMPAN GOAL"))),
+    ]));
+  }
+}
