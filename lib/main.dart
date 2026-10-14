@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -41,11 +40,11 @@ class _MainAppState extends State<MainApp> {
   Future<void> _load() async {
     final sp = await SharedPreferences.getInstance();
     setState(() {
-      tx = jsonDecode(sp.getString("tx") ?? "[]");
-      userName = sp.getString("name") ?? "";
-      userEmail = sp.getString("email") ?? "";
-      isPremium = sp.getBool("premium") ?? false;
-      isLogin = sp.getBool("isLogin") ?? false;
+      tx = jsonDecode(sp.getString("tx")?? "[]");
+      userName = sp.getString("name")?? "";
+      userEmail = sp.getString("email")?? "";
+      isPremium = sp.getBool("premium")?? false;
+      isLogin = sp.getBool("isLogin")?? false;
     });
   }
 
@@ -90,8 +89,8 @@ class _MainAppState extends State<MainApp> {
       if (!await f.exists()) f = File("${dir!.path}/backup.json");
       final d = jsonDecode(await f.readAsString());
       setState(() {
-        tx = List.from(d["tx"] ?? []);
-        isPremium = d["premium"] ?? false;
+        tx = List.from(d["tx"]?? []);
+        isPremium = d["premium"]?? false;
       });
       _save();
     } catch (e) {
@@ -163,95 +162,43 @@ class _MainAppState extends State<MainApp> {
         ],
       ),
       body: tab == 0
-          ? ListView(children: [
+        ? ListView(children: [
               Container(
                 padding: EdgeInsets.fromLTRB(20, 60, 20, 20),
                 color: Color(0xFF0F172A),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                     Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text("Halo, $userName ${isPremium ? "X" : ""}", style: TextStyle(color: Colors.white70)),
+                      Text("Halo, $userName", style: TextStyle(color: Colors.white70)),
                       Text("Saldo Kamu", style: TextStyle(color: Colors.white54, fontSize: 12)),
                     ]),
-                    CircleAvatar(backgroundColor: Colors.white, child: Text(userName.isEmpty ? "U" : userName[0].toUpperCase())),
+                    CircleAvatar(backgroundColor: Colors.white, child: Text(userName.isEmpty? "U" : userName[0].toUpperCase())),
                   ]),
                   SizedBox(height: 10),
                   Text(NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(bal), style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w900)),
-                  SizedBox(height: 12),
-                  Row(children: [
-                    Expanded(
-                      child: Container(
-                        padding: EdgeInsets.all(12),
-                        decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                        child: Row(children: [
-                          Icon(Icons.arrow_upward, color: Colors.greenAccent, size: 20),
-                          SizedBox(width: 6),
-                          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Text("Masuk", style: TextStyle(color: Colors.white54, fontSize: 10)),
-                            Text("Rp $inc", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                          ]),
-                        ]),
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Container(
-                        padding: EdgeInsets.all(12),
-                        decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                        child: Row(children: [
-                          Icon(Icons.arrow_downward, color: Colors.redAccent, size: 20),
-                          SizedBox(width: 6),
-                          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Text("Keluar", style: TextStyle(color: Colors.white54, fontSize: 10)),
-                            Text("Rp $out", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                          ]),
-                        ]),
-                      ),
-                    ),
-                  ]),
                 ]),
               ),
-              if (!isPremium)
-                Container(
-                  margin: EdgeInsets.all(16),
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.orange.shade200)),
-                  child: Row(children: [
-                    Icon(Icons.warning_amber_rounded, color: Colors.orange),
-                    SizedBox(width: 8),
-                    Expanded(child: Text("${tx.length}/30 Free. Upgrade Premium!", style: TextStyle(fontSize: 12))),
-                    TextButton(onPressed: () => setState(() => tab = 2), child: Text("Upgrade")),
-                  ]),
-                ),
-              Padding(padding: EdgeInsets.fromLTRB(16, 8, 16, 8), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text("Transaksi", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)), Text("${tx.length} item", style: TextStyle(color: Colors.grey))])),
-              ...tx.reversed.map((e) {
+             ...tx.reversed.map((e) {
                 return Container(
                   margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
                   child: ListTile(
-                    leading: Container(padding: EdgeInsets.all(8), decoration: BoxDecoration(color: e["type"] == "in" ? Colors.green.shade50 : Colors.red.shade50, borderRadius: BorderRadius.circular(10)), child: Icon(e["type"] == "in" ? Icons.call_received_rounded : Icons.call_made_rounded, color: e["type"] == "in" ? Colors.green : Colors.red)),
-                    title: Text(e["cat"], style: TextStyle(fontWeight: FontWeight.w600)),
+                    title: Text(e["cat"]),
                     subtitle: Text(DateFormat('dd MMM yyyy').format(DateTime.parse(e["date"]))),
-                    trailing: Text("${e["type"] == "in" ? "+" : "-"} Rp ${e["amount"]}", style: TextStyle(fontWeight: FontWeight.bold, color: e["type"] == "in" ? Colors.green : Colors.black)),
+                    trailing: Text("${e["type"] == "in"? "+" : "-"} Rp ${e["amount"]}"),
                   ),
                 );
               }).toList(),
-              SizedBox(height: 80),
             ])
           : tab == 1
-              ? Center(child: isPremium ? Text("Analitik Premium \n${tx.length} transaksi") : Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.lock_rounded, size: 70, color: Colors.grey.shade300), SizedBox(height: 12), Text("Premium Feature", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)), Text("Grafik hanya premium"), SizedBox(height: 12), ElevatedButton(onPressed: _buy, child: Text("Unlock Rp19k"))]))
+            ? Center(child: Text("Analitik"))
               : ListView(padding: EdgeInsets.all(20), children: [
-                  Container(padding: EdgeInsets.all(20), decoration: BoxDecoration(color: Color(0xFF0F172A), borderRadius: BorderRadius.circular(20)), child: Row(children: [CircleAvatar(radius: 30, backgroundColor: Colors.white, child: Text(userName.isEmpty ? "U" : userName[0].toUpperCase(), style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold))), SizedBox(width: 16), Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(userName, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)), Text(userEmail, style: TextStyle(color: Colors.white70)), SizedBox(height: 4), Container(padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: isPremium ? Colors.amber : Colors.grey, borderRadius: BorderRadius.circular(20)), child: Text(isPremium ? "PREMIUM" : "FREE", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)))] )])),
-                  SizedBox(height: 20),
-                  if (!isPremium)
-                    Container(padding: EdgeInsets.all(16), decoration: BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF0F172A), Color(0xFF334155)]), borderRadius: BorderRadius.circular(16)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("Upgrade ke Premium", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)), Text("Unlimited, Backup, Analitik", style: TextStyle(color: Colors.white70, fontSize: 12)), SizedBox(height: 12), SizedBox(width: double.infinity, child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black), onPressed: _buy, child: Text("BELI Rp19.000 LIFETIME")))])),
-                  SizedBox(height: 20),
-                  ListTile(leading: Icon(Icons.backup_rounded), title: Text("Export Backup"), subtitle: Text("Simpan ke Download"), onTap: _export),
-                  ListTile(leading: Icon(Icons.restore_rounded), title: Text("Import Backup"), onTap: _import),
-                  Divider(),
-                  ListTile(leading: Icon(Icons.logout, color: Colors.red), title: Text("Logout", style: TextStyle(color: Colors.red)), onTap: () async { final sp = await SharedPreferences.getInstance(); sp.clear(); setState(() => isLogin = false); }),
+                  ListTile(title: Text(userName)),
+                  ListTile(leading: Icon(Icons.backup_rounded), title: Text("Export"), onTap: _export),
+                  ListTile(leading: Icon(Icons.restore_rounded), title: Text("Import"), onTap: _import),
+                  ListTile(leading: Icon(Icons.logout, color: Colors.red), title: Text("Logout"), onTap: () async { final sp = await SharedPreferences.getInstance(); sp.clear(); setState(() => isLogin = false); }),
                 ]),
-      floatingActionButton: tab == 0 ? FloatingActionButton.extended(backgroundColor: Color(0xFF0F172A), onPressed: () { showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (_) => AddSheet(onAdd: _addTx)); }, icon: Icon(Icons.add, color: Colors.white), label: Text("Tambah", style: TextStyle(color: Colors.white))) : null,
+      floatingActionButton: FloatingActionButton(onPressed: () { showModalBottomSheet(context: context, builder: (_) => AddSheet(onAdd: _addTx)); }, child: Icon(Icons.add)),
     );
   }
 }
@@ -267,30 +214,14 @@ class _AddSheetState extends State<AddSheet> {
   String type = "out";
   final amountC = TextEditingController();
   final catC = TextEditingController(text: "Makan");
-
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    return Padding(
       padding: EdgeInsets.all(20),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
-        SizedBox(height: 20),
-        SegmentedButton<String>(
-          segments: [ButtonSegment(value: "out", label: Text("Keluar"), icon: Icon(Icons.arrow_downward)), ButtonSegment(value: "in", label: Text("Masuk"), icon: Icon(Icons.arrow_upward))],
-          selected: {type},
-          onSelectionChanged: (s) { setState(() => type = s.first); },
-        ),
-        SizedBox(height: 16),
-        TextField(controller: amountC, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: "Nominal", prefixText: "Rp ", border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
-        SizedBox(height: 12),
-        TextField(controller: catC, decoration: InputDecoration(labelText: "Untuk apa?", border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
-        SizedBox(height: 20),
-        SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF0F172A)), onPressed: () { final a = int.tryParse(amountC.text) ?? 0; if (a <= 0) return; widget.onAdd(type, a, catC.text); Navigator.pop(context); }, child: Text("SIMPAN", style: TextStyle(fontWeight: FontWeight.bold))),
-        ),
+        TextField(controller: amountC, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: "Nominal")),
+        TextField(controller: catC, decoration: InputDecoration(labelText: "Untuk apa?")),
+        ElevatedButton(onPressed: () { final a = int.tryParse(amountC.text)?? 0; if (a <= 0) return; widget.onAdd(type, a, catC.text); Navigator.pop(context); }, child: Text("SIMPAN")),
       ]),
     );
   }
